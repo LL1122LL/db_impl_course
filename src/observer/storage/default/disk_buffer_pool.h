@@ -38,8 +38,9 @@ typedef std::pair<int, PageNum> BufferTag;
 #define BP_BUFFER_SIZE 8
 #define MAX_OPEN_FILE 1024
 
+//普通页
 typedef struct {
-  PageNum page_num;
+  PageNum page_num;//标号
   char data[BP_PAGE_DATA_SIZE];
 } Page;
 // sizeof(Page) should be equal to BP_PAGE_SIZE
@@ -70,7 +71,7 @@ class BPFileHandle {
   bool bopen;
   const char *file_name;
   int file_desc;
-  Frame *hdr_frame;
+  Frame *hdr_frame;//?这里的file_desc没有重复么
   Page *hdr_page;
   char *bitmap;
   BPFileSubHeader *file_sub_header;
@@ -120,8 +121,15 @@ class BPManager {
      * 1. 如果lru cache中存在这个页，则将它返回
      * 2. 如果lru cache中不存在这个页，则返回nullptr
      */
-    
+     //构造出lur_cache中的key值
+    BufferTag bufferTag(file_desc,page_num);
+    if(lrucache.exists(bufferTag)){
+        int idx;
+        lrucache.get(bufferTag,&idx);
+        return &frame[idx];
+    }
     return nullptr;
+
   }
 
   Frame *getFrame() {
@@ -130,7 +138,7 @@ class BPManager {
      * 返回frame数组
      */
 
-    return nullptr;
+    return frame;
   }
 
   bool *getAllocated() {
@@ -139,7 +147,8 @@ class BPManager {
      * 返回allocated数组
      */
 
-    return nullptr;
+
+    return allocated;
   }
   
   void printLruCache();
@@ -263,7 +272,7 @@ class DiskBufferPool {
 
  public:
   BPManager bp_manager_;
-  BPFileHandle *open_list_[MAX_OPEN_FILE] = {nullptr};
+  BPFileHandle *open_list_[MAX_OPEN_FILE] = {nullptr};//open_list，管理单个文件的句柄的集合
 };
 
 DiskBufferPool *theGlobalDiskBufferPool();

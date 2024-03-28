@@ -4,8 +4,8 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 14)
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
-project(minidb)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+project(db_impl_course)
 
 MESSAGE(STATUS "This is SOURCE dir " ${test_SOURCE_DIR})
 MESSAGE(STATUS "This is BINARY dir " ${test_BINARY_DIR})

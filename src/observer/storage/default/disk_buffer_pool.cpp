@@ -52,11 +52,36 @@ Frame *BPManager::alloc(int file_desc, PageNum page_num) {
    * 提示：调用disk_buffer_pool->flush_block()来刷新到磁盘
    * 提示：调用lrucache.victim(victim, new_buffer_tag) 来将vitim页给替换了。
    */
+
+    BufferTag bufferTag(file_desc,page_num);
+    int frame_Index;
+    if (lrucache.size() < size) {
+
+        //查找空闲的framIndex位置
+        bool *allocArr = getAllocated();
+        for(frame_Index = 0;frame_Index < size;frame_Index++){
+            if(!allocArr[frame_Index])break;
+        }
+        allocated[frame_Index] = true;
+        frame[frame_Index].pin_count++;
+        lrucache.put(bufferTag, frame_Index);
+
+    } else {
+        //驱逐
+        BufferTag victim;
+        lrucache.getVictim(&victim, not_pinned, (void *) this);
+        Frame *frameArr = getFrame();
+        lrucache.get(victim, &frame_Index);
+        disk_buffer_pool->flush_block(&frameArr[frame_Index]);
+        lrucache.victim(victim, bufferTag);
+        //unpin
+    }
   
-  return nullptr;
+  return &frame[frame_Index];
 }
 
 void BPManager::printLruCache() {
+    setbuf(stdout, 0);
     // 输出lru cache中的内容，从head输出到tail，head表示最近访问的页，tail表示最近最少使用的页
     // 输出格式是：<file_id>:<page_num>:<buffer index>  其中buffer_index表示这个页在buffer中的下标
     for (auto it = lrucache._cache_items_list.begin(); it != lrucache._cache_items_list.end(); it++) {
@@ -549,6 +574,7 @@ RC DiskBufferPool::check_file_id(int file_id) {
 
 RC DiskBufferPool::get_page_count(int file_id, int *page_count) {
   RC rc = RC::SUCCESS;
+  //查看file id 是否合法，内部是否为空
   if ((rc = check_file_id(file_id)) != RC::SUCCESS) {
     return rc;
   }

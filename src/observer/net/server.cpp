@@ -320,6 +320,7 @@ int Server::start_tcp_server() {
   ret = bind(server_socket_, (struct sockaddr *)&sa, sizeof(sa));
   if (ret < 0) {
     LOG_ERROR("bind(): can not bind server socket, %s", strerror(errno));
+    perror("bind");
     ::close(server_socket_);
     return -1;
   }
